@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAML Config Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        textarea { width: 100%; height: 300px; }
+        button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>YAML Config Editor</h1>
+    <h2>Config 1</h2>
+    <textarea id="config1"></textarea>
+    <h2>Config 2</h2>
+    <textarea id="config2"></textarea>
+    <button onclick="saveConfigs()">Save</button>
+
+    <script>
+	async function loadConfigs() {
+	    try {
+		const response = await fetch('http://localhost:3000/api/config');
+		if (!response.ok) {
+		    throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		const data = await response.json();
+
+		// Check the structure of the data
+		console.log(data); // Log the data to inspect it
+
+		if (data.config1 && data.config2) {
+		    document.getElementById('config1').value = JSON.stringify(data.config1, null, 2);
+		    document.getElementById('config2').value = JSON.stringify(data.config2, null, 2);
+		} else {
+		    alert('Config data is undefined or improperly formatted.');
+		}
+	    } catch (error) {
+		console.error('Error loading configs:', error);
+		alert('Failed to load config files. Check the console for details.');
+	    }
+	}
+
+	async function saveConfigs() {
+	    const config1 = document.getElementById('config1').value;
+	    const config2 = document.getElementById('config2').value;
+
+	    try {
+		await fetch('http://localhost:3000/api/config/save', {
+		    method: 'POST',
+		    headers: {
+			'Content-Type': 'application/json',
+		    },
+		    body: JSON.stringify({
+			config1: JSON.parse(config1),
+			config2: JSON.parse(config2),
+		    }),
+		});
+		alert('Configurations saved!');
+	    } catch (error) {
+		console.error('Error saving configs:', error);
+		alert('Failed to save config files. Check the console for details.');
+	    }
+	}
+
+        // Load configs on page load
+        window.onload = loadConfigs;
+    </script>
+</body>
+</html>

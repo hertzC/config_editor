@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAML Config Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        textarea { width: 100%; height: 200px; margin-top: 10px; }
+        button { margin-top: 10px; }
+        .config-section { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>YAML Config Editor</h1>
+    <input type="file" id="fileInput" multiple accept=".yaml,.yml">
+    <div id="configAreas"></div>
+    <button onclick="saveConfigs()">Save All Configs</button>
+
+    <script>
+        let configs = {};
+
+        // Load the selected YAML files
+        document.getElementById('fileInput').addEventListener('change', async (event) => {
+            const files = event.target.files;
+            for (let file of files) {
+                const text = await file.text();
+                configs[file.name] = text;
+                displayConfig(file.name, text);
+            }
+        });
+
+        // Display the content of the YAML file in a textarea with the filename above
+        function displayConfig(fileName, content) {
+            const configAreas = document.getElementById('configAreas');
+            const section = document.createElement('div');
+            section.classList.add('config-section');
+
+            const header = document.createElement('h2');
+            header.textContent = fileName;
+            section.appendChild(header);
+
+            const textarea = document.createElement('textarea');
+            textarea.id = fileName;
+            textarea.value = content;
+            textarea.placeholder = `Editing ${fileName}`;
+            section.appendChild(textarea);
+
+            configAreas.appendChild(section);
+        }
+
+        // Save all configurations back to their respective files
+        async function saveConfigs() {
+            const savePromises = [];
+            for (let fileName in configs) {
+                const content = document.getElementById(fileName).value;
+                savePromises.push(saveConfig(fileName, content));
+            }
+
+            try {
+                await Promise.all(savePromises);
+                alert('All configurations saved!');
+            } catch (error) {
+                console.error('Error saving configs:', error);
+                alert('Failed to save one or more config files.');
+            }
+        }
+
+        // Function to send the updated content back to the server
+        async function saveConfig(fileName, content) {
+            return await fetch('http://localhost:3000/api/config/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fileName, content }),
+            });
+        }
+    </script>
+</body>
+</html>
